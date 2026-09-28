@@ -271,20 +271,13 @@ input[type=range]::-moz-range-thumb { width: 1.75rem; height: 1.75rem; border-ra
 .final__corpo { display: grid; gap: 1.75rem; justify-items: start; max-width: 42rem; }
 .final h2 { font-size: clamp(2.5rem, 6.5vw, 5rem); }
 
-/* Faixa de cor — capa colorida acima do rodapé (aurora em listras) */
-.faixa-rodape {
-  position: relative; z-index: 2;
-  height: clamp(3.5rem, 9vw, 5.5rem);
-  background: repeating-linear-gradient(100deg,
-    var(--ciano) 0 4%, #34C9A8 4% 8%, var(--neon) 8% 12%, var(--violeta) 12% 16%, var(--ciano) 16% 20%);
-}
-
 footer {
   position: relative; z-index: 2;
   background: var(--fundo);
   color: var(--suave);
   font-size: .9375rem;
   padding-block: 3rem 2.25rem;
+  border-radius: 2.25rem 2.25rem 0 0; /* fecha o painel claro sobre a aurora escura */
 }
 footer .wrap { display: block; }
 .footer__topo {
@@ -518,7 +511,6 @@ footer .wrap { display: block; }
 
 </main>
 
-<div class="faixa-rodape" aria-hidden="true"></div>
 <footer>
   <div class="wrap">
     <div class="footer__topo">
