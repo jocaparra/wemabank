@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>WEMA — Intro</title>
+<style>
+  /* Fundo estático atrás do canvas: evita "flash" branco antes do primeiro frame
+     e preenche as tarjas de letterbox quando a proporção da tela não é 16:9. */
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: #050B1A;
+  }
+  canvas#stage {
+    display: block;
+    width: 100vw; height: 100vh;
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="Animação de abertura da WEMA"></canvas>
+
+<script>
+/* =====================================================================
+   WEMA — animação de abertura (10s, canvas 2D puro, sem dependências)
+
+   Linha do tempo (todas as transições usam easeInOutCubic; os blocos
+   se sobrepõem por ~0,2–0,4s nas bordas para não haver corte seco):
+
+     0,0s –2,0s  pontos e linhas soltos, à deriva (dados desorganizados)
+     2,0s –5,0s  os pontos convergem para uma curva ascendente
+     5,0s –7,0s  a curva se apaga enquanto o wordmark "WEMA" é revelado
+     7,0s –9,0s  a tagline sobe com fade por baixo do wordmark
+     9,0s –10,0s pulso único de brilho no wordmark; a partir de 10s a
+                 animação para e o quadro final fica estático
+
+   Sistema de coordenadas: tudo é desenhado num espaço virtual de
+   1920×1080. A cada frame o contexto recebe um transform que ajusta
+   esse espaço à tela real ("contain fit"), então o layout inteiro é
+   responsivo sem precisar recalcular posições.
+   ===================================================================== */
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+
+  var VW = 1920, VH = 1080;   // resolução base do roteiro
+  var DUR = 10;                // duração total, em segundos
+
+  var dpr = 1, scale = 1, offX = 0, offY = 0;
+  var lastElapsed = 0; // último instante desenhado; usado para redesenhar ao redimensionar
+
+  function resize() {
+    dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+    var vw = window.innerWidth, vh = window.innerHeight;
+    canvas.style.width = vw + "px";
+    canvas.style.height = vh + "px";
+    canvas.width = Math.round(vw * dpr);
+    canvas.height = Math.round(vh * dpr);
+    scale = Math.min(vw / VW, vh / VH);      // "contain": nunca corta o roteiro
+    offX = (vw - VW * scale) / 2;
+    offY = (vh - VH * scale) / 2;
+    if (finished) drawFrame(lastElapsed);     // tela redimensionada: redesenha o último quadro (o final, em uso normal)
+  }
+  window.addEventListener("resize", resize);
+
+  /* ---------- easing (mesma curva para todas as transições) ---------- */
+  function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  /* ---------- paleta: preto/azul-marinho profundo + verde neon ---------- */
+  var BG_TOP = "#050B1A", BG_BOTTOM = "#0A1230";
+  var NEON = "#39FF88";
+  var TEXT = "#F4F7FF";
+  var SUAVE = "#A9B4CF";
+  var LINHA = "169,180,207"; // rgb para as linhas soltas do bloco 0–2s
+
+  /* ---------- fonte: só sans-serif de sistema, sem webfont ---------- */
+  var FONT_STACK = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+  /* ---------- curva de crescimento (bezier cúbica, "hockey stick") ---------- */
+  var CURVE = {
+    p0: { x: 440, y: 760 }, p1: { x: 760, y: 740 },
+    p2: { x: 1040, y: 420 }, p3: { x: 1480, y: 300 }
+  };
+  function bezierPoint(t) {
+    var mt = 1 - t;
+    return {
+      x: mt * mt * mt * CURVE.p0.x + 3 * mt * mt * t * CURVE.p1.x + 3 * mt * t * t * CURVE.p2.x + t * t * t * CURVE.p3.x,
+      y: mt * mt * mt * CURVE.p0.y + 3 * mt * mt * t * CURVE.p1.y + 3 * mt * t * t * CURVE.p2.y + t * t * t * CURVE.p3.y
+    };
+  }
+  var CURVE_SAMPLES = 120;
+  var curvePts = [];
+  for (var s = 0; s <= CURVE_SAMPLES; s++) curvePts.push(bezierPoint(s / CURVE_SAMPLES));
+
+  /* ---------- partículas: cada uma nasce espalhada e tem um ponto-alvo
+     ao longo da curva; a mesma partícula atravessa os blocos 0–2s
+     (deriva) e 2–5s (convergência) sem trocar de sistema. ---------- */
+  var N = 90;
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  var particles = [];
+  for (var i = 0; i < N; i++) {
+    var target = bezierPoint(i / (N - 1));
+    particles.push({
+      sx: rand(70, VW - 70), sy: rand(70, VH - 70),  // posição inicial dispersa
+      tx: target.x, ty: target.y,                     // alvo sobre a curva
+      jitterA: rand(3, 9), jitterF: rand(0.5, 1.3), jitterPh: rand(0, Math.PI * 2),
+      delay: rand(0, 0.55),                            // atraso para a convergência ficar orgânica
+      r: rand(1.6, 3.2),
+      x: 0, y: 0
+    });
+  }
+
+  /* pares de partículas usados para desenhar linhas soltas no bloco 0–2s */
+  var LINES = [];
+  for (var l = 0; l < 36; l++) {
+    LINES.push({
+      a: particles[Math.floor(Math.random() * N)],
+      b: particles[Math.floor(Math.random() * N)],
+      ph: rand(0, Math.PI * 2), f: rand(0.6, 1.4)
+    });
+  }
+
+  /* ---------- texto com letter-spacing manual (canvas não suporta de
+     forma confiável em todos os navegadores) ---------- */
+  function measureSpaced(text, font, spacing) {
+    ctx.font = font;
+    var total = 0, widths = [];
+    for (var c = 0; c < text.length; c++) {
+      var w = ctx.measureText(text[c]).width;
+      widths.push(w);
+      total += w + spacing;
+    }
+    total -= spacing;
+    return { total: total, widths: widths };
+  }
+  function drawSpacedText(text, cx, cy, font, spacing, fillStyle) {
+    var m = measureSpaced(text, font, spacing);
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillStyle = fillStyle;
+    var x = cx - m.total / 2;
+    for (var c = 0; c < text.length; c++) {
+      ctx.fillText(text[c], x, cy);
+      x += m.widths[c] + spacing;
+    }
+    return m.total;
+  }
+
+  function drawBackground() {
+    var g = ctx.createLinearGradient(0, 0, 0, VH);
+    g.addColorStop(0, BG_TOP);
+    g.addColorStop(1, BG_BOTTOM);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VW, VH);
+    // vinheta sutil para profundidade (estética fintech minimalista)
+    var rg = ctx.createRadialGradient(VW / 2, VH * 0.42, 0, VW / 2, VH * 0.42, VW * 0.75);
+    rg.addColorStop(0, "rgba(255,255,255,0)");
+    rg.addColorStop(1, "rgba(0,0,0,0.35)");
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, VW, VH);
+  }
+
+  var startTime = null, finished = false, rafId = null;
+
+  function drawFrame(elapsed) {
+    ctx.save();
+    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, offX * dpr, offY * dpr);
+    ctx.clearRect(0, 0, VW, VH);
+    drawBackground();
+
+    // =====================================================================
+    // BLOCO 0s–2s — pontos e linhas soltos, à deriva (dados desorganizados)
+    // As partículas ainda não convergiram (progress = 0 mais abaixo), então
+    // aqui elas só flutuam em torno da posição inicial dispersa. As linhas
+    // entre pares aleatórios piscam suavemente e se apagam até 2,3s.
+    // =====================================================================
+    var linesFadeEnd = 2.3;
+    if (elapsed < linesFadeEnd) {
+      var linesLife = clamp01(1 - (elapsed - 2.0) / (linesFadeEnd - 2.0));
+      ctx.lineWidth = 1;
+      for (var li = 0; li < LINES.length; li++) {
+        var ln = LINES[li];
+        var op = (0.10 + 0.10 * Math.sin(elapsed * ln.f * Math.PI * 2 + ln.ph)) * linesLife;
+        if (op <= 0) continue;
+        ctx.strokeStyle = "rgba(" + LINHA + "," + op.toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.moveTo(ln.a.x, ln.a.y);
+        ctx.lineTo(ln.b.x, ln.b.y);
+        ctx.stroke();
+      }
+    }
+
+    // =====================================================================
+    // BLOCO 2s–5s — os pontos convergem para a curva ascendente
+    // Cada partícula tem seu próprio início escalonado (delay) dentro da
+    // janela, para o movimento parecer orgânico e não um corte único.
+    // O tremor (jitter) do bloco anterior se dissolve conforme a partícula
+    // se aproxima do alvo (jitterAmt = 1 - eased).
+    // =====================================================================
+    var convergeStart = 2.0, localDur = 1.8;
+    for (var pi = 0; pi < N; pi++) {
+      var p = particles[pi];
+      var progress;
+      if (elapsed <= convergeStart) {
+        progress = 0;
+      } else {
+        var localStart = convergeStart + p.delay;
+        progress = clamp01((elapsed - localStart) / localDur);
+      }
+      var eased = easeInOutCubic(progress);
+      var jitterAmt = 1 - eased;
+      var jx = Math.sin(elapsed * p.jitterF * Math.PI * 2 + p.jitterPh) * p.jitterA * jitterAmt;
+      var jy = Math.cos(elapsed * p.jitterF * 1.3 * Math.PI * 2 + p.jitterPh) * p.jitterA * jitterAmt;
+      p.x = p.sx + (p.tx - p.sx) * eased + jx;
+      p.y = p.sy + (p.ty - p.sy) * eased + jy;
+    }
+
+    // o traçado da curva se desenha sozinho, como um gráfico sendo traçado,
+    // acompanhando a chegada das partículas
+    var strokeStart = 2.5, strokeEnd = 4.6;
+    var strokeProg = easeInOutCubic(clamp01((elapsed - strokeStart) / (strokeEnd - strokeStart)));
+
+    // =====================================================================
+    // BLOCO 5s–7s — a curva se apaga enquanto o wordmark é revelado
+    // "chartOpacity" cai de 1 a 0 entre 5,0s e 6,0s; o wordmark usa uma
+    // máscara (clip-rect) que cresce da esquerda para a direita entre
+    // 5,4s e 6,8s — as duas janelas se sobrepõem de propósito, para que a
+    // curva pareça se transformar no logotipo em vez de simplesmente sumir.
+    // =====================================================================
+    var chartFadeStart = 5.0, chartFadeEnd = 6.0;
+    var chartOpacity = elapsed < chartFadeStart ? 1 : clamp01(1 - (elapsed - chartFadeStart) / (chartFadeEnd - chartFadeStart));
+
+    if (chartOpacity > 0) {
+      if (strokeProg > 0) {
+        var upto = Math.max(1, Math.floor(strokeProg * CURVE_SAMPLES));
+        ctx.save();
+        ctx.globalAlpha = chartOpacity;
+        ctx.strokeStyle = NEON;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = NEON;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        for (var cpi = 0; cpi <= upto; cpi++) {
+          var cpt = curvePts[cpi];
+          if (cpi === 0) ctx.moveTo(cpt.x, cpt.y); else ctx.lineTo(cpt.x, cpt.y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        if (strokeProg < 1) { // ponto de brilho na ponta do traçado
+          var tip = curvePts[upto];
+          ctx.save();
+          ctx.globalAlpha = chartOpacity;
+          ctx.fillStyle = NEON;
+          ctx.shadowColor = NEON;
+          ctx.shadowBlur = 26;
+          ctx.beginPath();
+          ctx.arc(tip.x, tip.y, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      ctx.save();
+      ctx.globalAlpha = chartOpacity;
+      ctx.fillStyle = NEON;
+      for (var pj = 0; pj < N; pj++) {
+        var pp = particles[pj];
+        ctx.beginPath();
+        ctx.arc(pp.x, pp.y, pp.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // wordmark "WEMA" — revelado por uma máscara que cresce da esquerda
+    // para a direita (efeito de "wipe"), com leve brilho verde
+    var wmStart = 5.4, wmEnd = 6.8;
+    var wmProg = easeInOutCubic(clamp01((elapsed - wmStart) / (wmEnd - wmStart)));
+    var cx = VW / 2, cy = VH / 2 - 40;
+    var wmFont = "700 168px " + FONT_STACK;
+    var wmSpacing = 10;
+
+    if (elapsed >= wmStart) {
+      var wm = measureSpaced("WEMA", wmFont, wmSpacing);
+      var revealW = wm.total * wmProg;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx - wm.total / 2, cy - 140, Math.max(0, revealW), 280);
+      ctx.clip();
+      ctx.shadowColor = NEON;
+      ctx.shadowBlur = 22;
+      drawSpacedText("WEMA", cx, cy, wmFont, wmSpacing, TEXT);
+      ctx.restore();
+
+      // aresta luminosa acompanhando a borda da máscara enquanto ela avança
+      if (wmProg > 0 && wmProg < 1) {
+        var edgeX = cx - wm.total / 2 + revealW;
+        var eg = ctx.createLinearGradient(edgeX - 40, 0, edgeX + 2, 0);
+        eg.addColorStop(0, "rgba(57,255,136,0)");
+        eg.addColorStop(1, "rgba(57,255,136,0.9)");
+        ctx.save();
+        ctx.fillStyle = eg;
+        ctx.shadowColor = NEON;
+        ctx.shadowBlur = 24;
+        ctx.fillRect(edgeX - 40, cy - 140, 42, 280);
+        ctx.restore();
+      }
+
+      // ===================================================================
+      // BLOCO 7s–9s — a tagline sobe com fade por baixo do wordmark
+      // ===================================================================
+      var tagStart = 7.0, tagEnd = 8.3;
+      var tagProg = easeOutCubic(clamp01((elapsed - tagStart) / (tagEnd - tagStart)));
+      if (elapsed >= tagStart) {
+        var tagFont = "500 34px " + FONT_STACK;
+        var ty = (cy + 108) + (1 - tagProg) * 26;
+        ctx.save();
+        ctx.globalAlpha = tagProg;
+        drawSpacedText("Seu CFO pessoal com IA", cx, ty, tagFont, 1, SUAVE);
+        ctx.restore();
+      }
+
+      // ===================================================================
+      // BLOCO 9s–10s — pulso único de brilho no wordmark; ao final a
+      // composição fica estática (hump = seno de 0 a π: começa e termina
+      // em zero, então o último quadro em 10s volta ao repouso).
+      // ===================================================================
+      var pulseStart = 9.0;
+      if (elapsed >= pulseStart) {
+        var pp2 = clamp01((elapsed - pulseStart) / 1.0);
+        var hump = Math.sin(pp2 * Math.PI);
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = 0.55 * hump;
+        ctx.shadowColor = NEON;
+        ctx.shadowBlur = 42 * hump;
+        drawSpacedText("WEMA", cx, cy, wmFont, wmSpacing, NEON);
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function loop(ts) {
+    if (startTime === null) startTime = ts;
+    var elapsed = Math.min((ts - startTime) / 1000, DUR);
+    lastElapsed = elapsed;
+    drawFrame(elapsed);
+    if (elapsed < DUR) {
+      rafId = requestAnimationFrame(loop);
+    } else {
+      finished = true;
+      rafId = null; // roda uma única vez; o quadro final permanece estático
+    }
+  }
+
+  // Gancho de depuração opcional: abrir o arquivo como intro.html?t=6.5
+  // desenha um único quadro estático naquele instante (sem iniciar o loop).
+  // Sem esse parâmetro na URL, o comportamento é o normal: roda uma vez e para.
+  var debugT = new URLSearchParams(location.search).get("t");
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  resize();
+  if (debugT !== null && isFinite(+debugT)) {
+    finished = true;
+    lastElapsed = clamp01(+debugT / DUR) * DUR;
+    drawFrame(lastElapsed);
+  } else if (reduceMotion) {
+    // Preferência do sistema por menos movimento: pula direto para a
+    // composição final, sem rodar a animação de 10s.
+    finished = true;
+    lastElapsed = DUR;
+    drawFrame(DUR);
+  } else {
+    rafId = requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>

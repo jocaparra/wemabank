@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F4F6FB">
+<title>WEMA | Seu dinheiro, com clareza</title>
+<link rel="icon" href="wema-favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="wema-touch-180.png">
+<meta name="description" content="A WEMA conecta suas contas por Open Finance, mostra para onde o dinheiro vai e transforma sonhos em planos com prazo e valor por mês. Tudo numa conversa no WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fundo: #F4F6FB;
+  --bruma: #E9EEF8;
+  --bruma-2: #EEF2FA;
+  --bruma-3: #D9E1F2;
+  --neon: #39FF88;
+  --on-neon: #04140B;
+  --verde: #08794A;
+  --ciano: #3DE1FF;
+  --violeta: #8B5CFF;
+  --foco: #4F35D8;
+  --texto: #0A1230;
+  --suave: #4B5878;
+  --linha: rgba(10, 18, 48, .14);
+
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --corpo: "Hanken Grotesk", system-ui, sans-serif;
+
+  --gutter: 1rem;
+  --raio: 1.75rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--corpo);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; max-width: 100%; }
+h1, h2, h3, p, dl, dd, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 3px; border-radius: 6px; }
+
+.wrap { width: min(1180px, 100% - 2 * var(--gutter)); margin-inline: auto; position: relative; z-index: 1; }
+
+/* Tipografia */
+.h-display, h1, h2 { font-family: var(--display); font-weight: 350; letter-spacing: -.025em; text-wrap: balance; }
+h1 {
+  font-size: clamp(3.25rem, 9vw, 6.5rem);
+  line-height: .98;
+  font-stretch: 88%;
+  font-variation-settings: "opsz" 96;
+}
+h2 { font-size: clamp(2rem, 4.6vw, 3.5rem); line-height: 1.05; font-variation-settings: "opsz" 72; }
+h3 { font-family: var(--display); font-weight: 450; font-size: 1.5rem; line-height: 1.2; letter-spacing: -.015em; }
+p { text-wrap: pretty; }
+.lead { font-size: clamp(1.125rem, 1.6vw, 1.3rem); color: var(--suave); max-width: 34rem; }
+.suave { color: var(--suave); }
+.num { font-family: var(--display); font-variant-numeric: tabular-nums lining-nums; }
+.destaque { color: var(--verde); }
+
+/* Botão */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 3.25rem; padding: .75rem 1.6rem;
+  border-radius: 999px; border: 0;
+  background: var(--neon); color: var(--on-neon);
+  font: 600 1.0625rem/1.2 var(--corpo);
+  text-decoration: none; cursor: pointer;
+  transition: filter .2s, transform .2s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(.98); }
+.btn--sm { min-height: 2.5rem; padding: .5rem 1.15rem; font-size: .9375rem; }
+
+/* Seções */
+.section { position: relative; padding-block: clamp(4.5rem, 10vw, 8rem); overflow: hidden; }
+.section--bruma { background: var(--bruma); }
+
+/* Aurora */
+.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aurora i {
+  position: absolute; border-radius: 50%;
+  filter: blur(60px);
+  transform: rotate(var(--r));
+  animation: drift var(--t, 24s) ease-in-out infinite alternate;
+}
+.aurora .a1 { --r: -14deg; --t: 26s; left: 4%;  top: -14%; width: 70vw; height: 26vw; background: radial-gradient(closest-side, rgba(61,225,255,.6), transparent); }
+.aurora .a2 { --r: 10deg;  --t: 30s; right: -12%; top: 2%;  width: 62vw; height: 32vw; background: radial-gradient(closest-side, rgba(139,92,255,.42), transparent); }
+.aurora .a3 { --r: -8deg;  --t: 22s; left: 38%; top: 24%; width: 42vw; height: 10vw; background: radial-gradient(closest-side, rgba(57,255,136,.4), transparent); }
+.aurora .a4 { --r: 6deg;   --t: 34s; left: -10%; top: 40%; width: 50vw; height: 22vw; background: radial-gradient(closest-side, rgba(139,92,255,.28), transparent); }
+.aurora__rays {
+  position: absolute; inset: 0; opacity: .5; filter: blur(3px);
+  background: repeating-linear-gradient(100deg, transparent 0 3.5%, rgba(60,170,255,.14) 4.2%, transparent 5.6%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, transparent 68%);
+          mask-image: linear-gradient(to bottom, #000 0, transparent 68%);
+}
+.aurora::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, rgba(244,246,251,.55) 0%, rgba(244,246,251,.1) 50%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, var(--fundo) 96%);
+}
+.aurora--suave { opacity: .85; }
+@keyframes drift {
+  from { transform: rotate(var(--r)) translate3d(-4%, 0, 0) scale(1); }
+  to   { transform: rotate(calc(var(--r) + 6deg)) translate3d(6%, 9%, 0) scale(1.12); }
+}
+
+/* Hero */
+.hero { padding-top: 1.25rem; padding-bottom: clamp(4rem, 9vw, 7rem); }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: .5rem 0; }
+.brand { display: inline-flex; align-items: center; gap: .6rem; font: 600 1.6rem/1 var(--display); letter-spacing: -.03em; color: var(--texto); text-decoration: none; }
+.hero__grid { display: grid; gap: 3rem; align-items: center; padding-top: clamp(3rem, 8vw, 6rem); }
+.hero__texto { display: grid; gap: 1.75rem; justify-items: start; }
+.hero__nota { font-size: .9375rem; color: var(--suave); }
+
+@media (min-width: 900px) {
+  .hero__grid { grid-template-columns: 1.15fr .85fr; gap: 4rem; }
+}
+
+/* Conversa */
+.chat {
+  position: relative;
+  background: #fff;
+  border: 1px solid rgba(10,18,48,.1);
+  border-radius: 2rem;
+  padding: 1.1rem 1.1rem 1.4rem;
+  width: min(100%, 26rem);
+  justify-self: center;
+  box-shadow: 0 30px 70px -25px rgba(30,40,110,.35);
+}
+.chat__topo { display: flex; align-items: center; gap: .7rem; padding: .25rem .4rem 1rem; border-bottom: 1px solid var(--linha); }
+.avatar { width: 2.4rem; height: 2.4rem; border-radius: 50%; object-fit: cover; flex: none; }
+.brand__mark { width: 1.875rem; height: 1.875rem; border-radius: .55rem; object-fit: cover; flex: none; }
+.chat__nome { font-weight: 600; line-height: 1.2; }
+.chat__corpo { display: grid; gap: .65rem; padding: 1.1rem .1rem 0; position: relative; min-height: 22.5rem; align-content: start; }
+.msg { max-width: 88%; padding: .7rem .95rem; border-radius: 1.15rem; font-size: 1rem; line-height: 1.45; transition: opacity .35s, transform .35s; }
+.msg--voce { justify-self: end; background: var(--bruma-3); border-bottom-right-radius: .35rem; }
+.msg--wema { justify-self: start; background: var(--bruma-2); border-bottom-left-radius: .35rem; }
+.msg b { font-family: var(--display); font-weight: 600; color: var(--verde); font-variant-numeric: tabular-nums; }
+.is-playing .msg:not(.is-in) { opacity: 0; transform: translateY(8px); }
+.digitando {
+  position: absolute; left: .1rem; display: none; gap: .3rem; padding: .85rem 1rem;
+  background: var(--bruma-2); border-radius: 1.15rem; border-bottom-left-radius: .35rem;
+}
+.digitando.on { display: flex; }
+.digitando span { width: .45rem; height: .45rem; border-radius: 50%; background: var(--suave); animation: pulso 1s infinite; }
+.digitando span:nth-child(2) { animation-delay: .15s; }
+.digitando span:nth-child(3) { animation-delay: .3s; }
+@keyframes pulso { 0%, 60%, 100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+/* Cabeçalho de seção */
+.cabeca { display: grid; gap: 1.1rem; margin-bottom: clamp(2.5rem, 5vw, 4rem); max-width: 40rem; }
+
+/* Para onde vai */
+.duas { display: grid; gap: 3rem; }
+@media (min-width: 900px) { .duas { grid-template-columns: 5fr 7fr; gap: 5rem; align-items: start; } }
+.faixa { display: flex; gap: 4px; height: 4.5rem; margin-bottom: 2rem; }
+.faixa span { flex: var(--v) 1 0; border-radius: .6rem; background: var(--c); min-width: 6px; }
+.faixa span:first-child { border-top-left-radius: 2.25rem; border-bottom-left-radius: 2.25rem; }
+.faixa span:last-child { border-top-right-radius: 2.25rem; border-bottom-right-radius: 2.25rem; }
+.gastos { display: grid; }
+.gastos div { display: flex; align-items: center; gap: .85rem; padding: .8rem 0; border-bottom: 1px solid var(--linha); }
+.gastos dt { display: flex; align-items: center; gap: .85rem; flex: 1; }
+.gastos dt::before { content: ""; width: .8rem; height: .8rem; border-radius: 50%; background: var(--c); flex: none; }
+.gastos dd { font-family: var(--display); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.gastos .total { border-bottom: 0; padding-top: 1.2rem; }
+.gastos .total dt::before { display: none; }
+.gastos .total dt { font-weight: 600; }
+.nota { font-size: .9375rem; color: var(--suave); margin-top: 1.25rem; }
+
+/* Simulador de metas */
+.sim { display: grid; gap: 3rem; }
+@media (min-width: 900px) { .sim { grid-template-columns: 1fr 1fr; gap: 5rem; align-items: end; } }
+.controles { display: grid; gap: 2.25rem; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend, .rotulo { font-weight: 600; margin-bottom: .9rem; padding: 0; display: block; }
+.sonhos { display: flex; flex-wrap: wrap; gap: .6rem; }
+.sonhos label { position: relative; }
+.sonhos input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.sonhos span {
+  display: inline-flex; flex-direction: column; padding: .7rem 1.2rem; border-radius: 999px;
+  border: 1.5px solid var(--linha); background: rgba(255,255,255,.7); line-height: 1.25;
+  transition: border-color .2s, background .2s;
+}
+.sonhos small { color: var(--suave); font-size: .875rem; }
+.sonhos input:checked + span { border-color: var(--texto); background: #fff; }
+.sonhos input:focus-visible + span { outline: 3px solid var(--foco); outline-offset: 3px; }
+.mensal { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .6rem; }
+.mensal output { font-family: var(--display); font-size: 2rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 2.5rem; background: transparent; cursor: pointer; margin: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--ciano), var(--violeta)) 0 / var(--p, 30%) 100% no-repeat, var(--bruma-3); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 6px; background: var(--bruma-3); }
+input[type=range]::-moz-range-progress { height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--ciano), var(--violeta)); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 1.75rem; height: 1.75rem; margin-top: -.6rem; border-radius: 50%; background: var(--texto); border: 0; box-shadow: 0 2px 8px rgba(10,18,48,.35); }
+input[type=range]::-moz-range-thumb { width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--texto); border: 0; box-shadow: 0 2px 8px rgba(10,18,48,.35); }
+.escala { display: flex; justify-content: space-between; color: var(--suave); font-size: .875rem; }
+
+.resultado { display: grid; gap: .5rem; }
+.resultado__meta { color: var(--suave); }
+.resultado__num { font-family: var(--display); font-weight: 300; font-size: clamp(2.75rem, 6vw, 4.6rem); line-height: .95; letter-spacing: -.035em; color: var(--verde); font-variant-numeric: tabular-nums; font-variation-settings: "opsz" 96; }
+.resultado__data { font-size: 1.25rem; }
+.resultado__data b { font-family: var(--display); font-weight: 500; color: var(--verde); }
+.resultado__dica { color: var(--suave); max-width: 26rem; margin-top: .5rem; }
+.resultado__dica b { color: var(--texto); font-weight: 600; }
+
+.horizonte { margin-top: 3.5rem; }
+.horizonte__trilho { position: relative; height: 10px; border-radius: 10px; background: var(--bruma-3); }
+.horizonte__fill { position: absolute; inset: 0 auto 0 0; width: var(--w, 25%); border-radius: 10px; background: linear-gradient(90deg, var(--ciano), var(--violeta)); transition: width .35s ease; }
+.horizonte__ponto { position: absolute; top: 50%; left: var(--w, 25%); width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--neon); transform: translate(-50%, -50%); transition: left .35s ease; box-shadow: 0 0 0 5px rgba(57,255,136,.4); }
+.horizonte__marcas { display: flex; justify-content: space-between; margin-top: .9rem; color: var(--suave); font-size: .9375rem; }
+
+/* IA no WhatsApp */
+.capacidades { display: grid; }
+.capacidades li { display: grid; gap: .4rem; padding: 1.6rem 0; border-top: 1px solid var(--linha); }
+.capacidades li:last-child { border-bottom: 1px solid var(--linha); }
+.capacidades p { color: var(--suave); max-width: 32rem; }
+.aviso { display: grid; gap: .75rem; align-content: center; align-self: center; }
+.aviso .msg { max-width: 100%; background: #fff; }
+.aviso p.nota { margin-top: .25rem; }
+
+/* Sem conflito */
+@media (min-width: 900px) { .declaracao--inv { grid-template-columns: 5fr 7fr; } .declaracao--inv .promessas { order: -1; } }
+.declaracao { display: grid; gap: 3rem; }
+@media (min-width: 900px) { .declaracao { grid-template-columns: 7fr 5fr; gap: 5rem; align-items: end; } }
+.promessas li { padding: 1.1rem 0; border-top: 1px solid var(--linha); }
+.promessas li:last-child { border-bottom: 1px solid var(--linha); }
+.promessas strong { display: block; font-family: var(--display); font-weight: 450; font-size: 1.25rem; }
+.promessas span { color: var(--suave); }
+
+/* CTA final */
+.final { text-align: left; padding-block: clamp(5.5rem, 12vw, 10rem); }
+.final__corpo { display: grid; gap: 1.75rem; justify-items: start; max-width: 42rem; }
+.final h2 { font-size: clamp(2.5rem, 6.5vw, 5rem); }
+
+/* Faixa de cor — capa colorida acima do rodapé (aurora em listras) */
+.faixa-rodape {
+  position: relative; z-index: 2;
+  height: clamp(3.5rem, 9vw, 5.5rem);
+  background: repeating-linear-gradient(100deg,
+    var(--ciano) 0 4%, #34C9A8 4% 8%, var(--neon) 8% 12%, var(--violeta) 12% 16%, var(--ciano) 16% 20%);
+}
+
+footer {
+  position: relative; z-index: 2;
+  background: var(--fundo);
+  color: var(--suave);
+  font-size: .9375rem;
+  padding-block: 3rem 2.25rem;
+}
+footer .wrap { display: block; }
+.footer__topo {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+  gap: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--linha);
+}
+.footer__marca { display: grid; gap: .85rem; max-width: 24rem; }
+.footer__marca .brand { font-size: 1.35rem; }
+.footer__nota { color: var(--suave); }
+.footer__redes { display: grid; gap: .85rem; justify-items: start; }
+.footer__rotulo { font-weight: 600; color: var(--texto); }
+.footer__social {
+  width: 2.75rem; height: 2.75rem; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--texto); color: var(--fundo);
+  transition: background .2s;
+}
+.footer__social:hover, .footer__social:focus-visible { background: var(--verde); }
+.footer__base {
+  padding-top: 1.5rem;
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem;
+}
+
+@media (max-width: 520px) {
+  .nav .btn .longo { display: none; }
+  .msg { max-width: 92%; }
+}
+@media (min-width: 521px) { .nav .btn .curto { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora i { animation: none; }
+  .msg, .horizonte__fill, .horizonte__ponto, .btn { transition: none; }
+  .digitando span { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="section hero">
+  <div class="aurora" aria-hidden="true">
+    <i class="a1"></i><i class="a2"></i><i class="a3"></i><i class="a4"></i>
+    <div class="aurora__rays"></div>
+  </div>
+
+  <div class="wrap">
+    <nav class="nav" aria-label="Principal">
+      <a class="brand" href="#" aria-label="WEMA, início">
+        <img class="brand__mark" src="wema-mark-64.png" width="30" height="30" alt="">
+        wema
+      </a>
+      <a class="btn btn--sm js-wa" href="https://wa.me/?text=Oi%2C%20WEMA">
+        <span class="longo">Falar no WhatsApp</span><span class="curto">WhatsApp</span>
+      </a>
+    </nav>
+
+    <div class="hero__grid">
+      <div class="hero__texto">
+        <h1>Seu dinheiro, com clareza.</h1>
+        <p class="lead">A WEMA conecta suas contas, mostra para onde o dinheiro vai e transforma seus sonhos em planos com prazo e valor por mês. Tudo numa conversa no WhatsApp.</p>
+        <a class="btn js-wa" href="https://wa.me/?text=Oi%2C%20WEMA">Falar com a WEMA no WhatsApp</a>
+        <p class="hero__nota">Gratuito ou muito barato. Sem comissão.</p>
+      </div>
+
+      <div class="chat" id="chat" role="group" aria-label="Exemplo de conversa com a WEMA">
+        <div class="chat__topo">
+          <img class="avatar" src="wema-mark-64.png" width="38" height="38" alt="" aria-hidden="true">
+          <div class="chat__nome">WEMA</div>
+        </div>
+        <div class="chat__corpo" id="chatCorpo">
+          <div class="msg msg--voce" data-role="voce">E se eu cortar o delivery por 3 meses?</div>
+          <div class="msg msg--wema" data-role="wema">Em agosto você gastou R$&nbsp;412 com delivery. Cortando por 3 meses, sobram <b>R$&nbsp;1.236</b>.</div>
+          <div class="msg msg--wema" data-role="wema">Se guardar isso na meta da moto, você chega <b>2 meses mais cedo</b>. Quer que eu ajuste o plano?</div>
+          <div class="msg msg--voce" data-role="voce">Quero</div>
+          <div class="digitando" id="digitando" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="section" id="dinheiro" aria-labelledby="t-dinheiro">
+    <div class="wrap duas">
+      <div class="cabeca" style="margin-bottom:0">
+        <h2 id="t-dinheiro">Veja para onde foi o seu mês, numa linha só.</h2>
+        <p class="lead">Conecte suas contas pelo Open Finance e a WEMA separa cada gasto sozinha. Você não digita nada e não abre planilha.</p>
+      </div>
+
+      <div>
+        <div class="faixa" aria-hidden="true">
+          <span style="--v:520; --c:#3DE1FF"></span>
+          <span style="--v:310; --c:#8B5CFF"></span>
+          <span style="--v:412; --c:#39FF88"></span>
+          <span style="--v:268; --c:#B79CFF"></span>
+          <span style="--v:96;  --c:#5BCBE3"></span>
+          <span style="--v:574; --c:#9AA6C6"></span>
+        </div>
+        <dl class="gastos">
+          <div style="--c:#3DE1FF"><dt>Mercado e comida</dt><dd>R$ 520</dd></div>
+          <div style="--c:#8B5CFF"><dt>Transporte</dt><dd>R$ 310</dd></div>
+          <div style="--c:#39FF88"><dt>Delivery</dt><dd class="destaque">R$ 412</dd></div>
+          <div style="--c:#B79CFF"><dt>Lazer</dt><dd>R$ 268</dd></div>
+          <div style="--c:#5BCBE3"><dt>Assinaturas</dt><dd>R$ 96</dd></div>
+          <div style="--c:#9AA6C6"><dt>Outros</dt><dd>R$ 574</dd></div>
+          <div class="total"><dt>Total em agosto</dt><dd>R$ 2.180</dd></div>
+        </dl>
+        <p class="nota">Valores de exemplo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="metas" aria-labelledby="t-metas">
+    <div class="aurora aurora--suave" aria-hidden="true">
+      <i class="a1"></i><i class="a2"></i><i class="a4"></i>
+    </div>
+    <div class="wrap">
+      <div class="cabeca">
+        <h2 id="t-metas">Onde você quer estar daqui a 10 anos?</h2>
+        <p class="lead">Escolha um sonho e ajuste quanto dá para guardar por mês. A WEMA calcula o prazo.</p>
+      </div>
+
+      <div class="sim">
+        <form class="controles" onsubmit="return false">
+          <fieldset>
+            <legend>Seu sonho</legend>
+            <div class="sonhos">
+              <label><input type="radio" name="sonho" value="moto" checked><span>Moto<small>R$ 12.000</small></span></label>
+              <label><input type="radio" name="sonho" value="intercambio"><span>Intercâmbio<small>R$ 25.000</small></span></label>
+              <label><input type="radio" name="sonho" value="reserva"><span>Primeira reserva<small>R$ 6.500</small></span></label>
+            </div>
+          </fieldset>
+          <div>
+            <div class="mensal">
+              <label class="rotulo" for="mensal" style="margin:0">Quanto você guarda por mês</label>
+              <output id="mensalOut" for="mensal">R$ 400</output>
+            </div>
+            <input type="range" id="mensal" min="50" max="1500" step="50" value="400">
+            <div class="escala" aria-hidden="true"><span>R$ 50</span><span>R$ 1.500</span></div>
+          </div>
+        </form>
+
+        <div class="resultado" aria-live="polite" aria-atomic="true">
+          <p class="resultado__meta" id="resMeta">Moto de R$ 12.000</p>
+          <p class="resultado__num" id="resNum">2 anos e 6 meses</p>
+          <p class="resultado__data" id="resData">Você chega lá em <b>março de 2029</b>.</p>
+          <p class="resultado__dica" id="resDica"></p>
+        </div>
+      </div>
+
+      <div class="horizonte" aria-hidden="true">
+        <div class="horizonte__trilho" id="trilho">
+          <div class="horizonte__fill" id="fill"></div>
+          <div class="horizonte__ponto" id="ponto"></div>
+        </div>
+        <div class="horizonte__marcas"><span>Hoje</span><span>5 anos</span><span>10 anos</span></div>
+      </div>
+      <p class="nota">Simulação de exemplo, sem contar rendimento.</p>
+    </div>
+  </section>
+
+  <section class="section section--bruma" id="whatsapp" aria-labelledby="t-ia">
+    <div class="wrap duas">
+      <div>
+        <div class="cabeca">
+          <h2 id="t-ia">Uma conversa, não um aplicativo a mais.</h2>
+          <p class="lead">A WEMA mora no WhatsApp, onde você já está. Pergunte do jeito que falaria com um amigo.</p>
+        </div>
+        <ul class="capacidades">
+          <li>
+            <h3>Responde em linguagem simples</h3>
+            <p>O que é CDI? Vale parcelar isso? A WEMA explica sem jargão de banco.</p>
+          </li>
+          <li>
+            <h3>Simula antes de você decidir</h3>
+            <p>Corte um gasto, aumente o valor guardado e veja na hora o que muda no prazo da sua meta.</p>
+          </li>
+          <li>
+            <h3>Avisa só quando importa</h3>
+            <p>Sem notificação por qualquer coisa. Fatura acima do normal, meta atrasando ou dinheiro parado: só isso.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="aviso">
+        <div class="msg msg--wema">Sua fatura do cartão veio <b>R$&nbsp;180</b> acima da média dos últimos 3 meses. Quer ver o que mudou?</div>
+        <p class="nota">Um exemplo de aviso. Fora isso, a WEMA fica quieta.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="sem-conflito" aria-labelledby="t-conflito">
+    <div class="wrap declaracao">
+      <div class="cabeca" style="margin-bottom:0">
+        <h2 id="t-conflito">Sem comissão. Sem produto para vender.</h2>
+        <p class="lead">Quando a WEMA diz que algo faz sentido para você, não tem ninguém ganhando por trás. A orientação é sua.</p>
+      </div>
+      <ul class="promessas">
+        <li><strong>Nenhuma comissão</strong><span>A WEMA não recebe de banco, corretora ou seguradora.</span></li>
+        <li><strong>Nenhum produto financeiro à venda</strong><span>Sem empurrar cartão, empréstimo ou investimento.</span></li>
+        <li><strong>Gratuito ou muito barato</strong><span>Feita para quem tem pouco dinheiro e pouco tempo.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--bruma" id="confianca" aria-labelledby="t-conf">
+    <div class="wrap declaracao declaracao--inv">
+      <div class="cabeca" style="margin-bottom:0">
+        <h2 id="t-conf">Seus dados ficam do jeito que você decidir.</h2>
+        <p class="lead">A conexão usa o Open Finance, o sistema regulado pelo Banco Central para compartilhar dados entre instituições.</p>
+      </div>
+      <ul class="promessas">
+        <li><strong>Você escolhe o que compartilhar</strong><span>Quais contas e quais dados, por quanto tempo.</span></li>
+        <li><strong>A WEMA só lê</strong><span>Ela mostra e explica. Não mexe no seu dinheiro.</span></li>
+        <li><strong>Você cancela quando quiser</strong><span>Revogue o acesso a qualquer momento.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section final" aria-labelledby="t-final">
+    <div class="aurora" aria-hidden="true">
+      <i class="a1"></i><i class="a2"></i><i class="a3"></i>
+      <div class="aurora__rays"></div>
+    </div>
+    <div class="wrap">
+      <div class="final__corpo">
+        <h2 id="t-final">Comece pelo seu primeiro sonho.</h2>
+        <p class="lead">Mande um oi. Em poucos minutos você sabe para onde vai o seu dinheiro e quanto falta para a sua meta.</p>
+        <a class="btn js-wa" href="https://wa.me/?text=Oi%2C%20WEMA">Falar com a WEMA no WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="faixa-rodape" aria-hidden="true"></div>
+<footer>
+  <div class="wrap">
+    <div class="footer__topo">
+      <div class="footer__marca">
+        <a class="brand" href="#" aria-label="WEMA, início">
+          <img class="brand__mark" src="wema-mark-64.png" width="30" height="30" alt="">
+          wema
+        </a>
+        <p class="footer__nota">Valores de exemplo. Aviso legal e política de privacidade a definir.</p>
+      </div>
+      <div class="footer__redes">
+        <span class="footer__rotulo">Redes</span>
+        <a class="footer__social" href="https://www.linkedin.com/company/wemabank" target="_blank" rel="noopener" aria-label="WEMA no LinkedIn (abre em nova aba)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M20.45 20.45h-3.56v-5.58c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.68H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+    <div class="footer__base">
+      <span>© 2026 WEMA. Todos os direitos reservados.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Número do WhatsApp da WEMA (com DDI e DDD, só dígitos). Vazio abre o WhatsApp sem contato definido.
+  var WHATSAPP = "";
+  var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Links de WhatsApp
+  document.querySelectorAll(".js-wa").forEach(function (a) {
+    a.href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent("Oi, WEMA");
+  });
+
+  // Conversa do hero: digita uma vez
+  var chat = document.getElementById("chatCorpo");
+  var typing = document.getElementById("digitando");
+  var msgs = Array.prototype.slice.call(chat.querySelectorAll(".msg"));
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  if (!reduce) {
+    chat.classList.add("is-playing");
+    (async function () {
+      await wait(700);
+      for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        if (m.dataset.role === "wema") {
+          typing.style.top = m.offsetTop + "px";
+          typing.classList.add("on");
+          await wait(1100);
+          typing.classList.remove("on");
+        } else {
+          await wait(500);
+        }
+        m.classList.add("is-in");
+        await wait(650);
+      }
+    })();
+  }
+
+  // Simulador de metas
+  var sonhos = {
+    moto:        { nome: "Moto", custo: 12000, artigo: "Moto" },
+    intercambio: { nome: "Intercâmbio", custo: 25000 },
+    reserva:     { nome: "Primeira reserva", custo: 6500 }
+  };
+  var slider = document.getElementById("mensal");
+  var out = document.getElementById("mensalOut");
+  var resMeta = document.getElementById("resMeta");
+  var resNum = document.getElementById("resNum");
+  var resData = document.getElementById("resData");
+  var resDica = document.getElementById("resDica");
+  var fill = document.getElementById("fill");
+  var ponto = document.getElementById("ponto");
+  var trilho = document.getElementById("trilho");
+
+  function duracao(m) {
+    var a = Math.floor(m / 12), r = m % 12, p = [];
+    if (a) p.push(a + (a === 1 ? " ano" : " anos"));
+    if (r) p.push(r + (r === 1 ? " mês" : " meses"));
+    return p.join(" e ");
+  }
+  function dataFutura(m) {
+    var d = new Date();
+    d.setMonth(d.getMonth() + m);
+    return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }
+
+  function atualizar() {
+    var chave = document.querySelector('input[name="sonho"]:checked').value;
+    var s = sonhos[chave];
+    var mensal = +slider.value;
+    var meses = Math.ceil(s.custo / mensal);
+    var pct = Math.min(meses / 120, 1) * 100;
+
+    out.textContent = brl.format(mensal).replace(/\s/g, " ");
+    slider.style.setProperty("--p", ((mensal - slider.min) / (slider.max - slider.min) * 100) + "%");
+    resMeta.textContent = s.nome + " de " + brl.format(s.custo).replace(/\s/g, " ");
+
+    if (meses > 120) {
+      resNum.textContent = "Mais de 10 anos";
+      resData.innerHTML = "Nesse ritmo, a meta passa do seu horizonte.";
+      resDica.innerHTML = "Aumente o valor mensal ou escolha uma meta menor para chegar antes.";
+    } else {
+      resNum.textContent = duracao(meses);
+      resData.innerHTML = "Você chega lá em <b>" + dataFutura(meses) + "</b>.";
+      if (mensal + 100 <= +slider.max) {
+        var antes = meses - Math.ceil(s.custo / (mensal + 100));
+        resDica.innerHTML = antes > 0
+          ? "Guardando <b>R$ 100 a mais</b> por mês, você chega " + antes + (antes === 1 ? " mês" : " meses") + " mais cedo."
+          : "";
+      } else {
+        resDica.innerHTML = "";
+      }
+    }
+    trilho.style.setProperty("--w", pct + "%");
+    fill.style.setProperty("--w", pct + "%");
+    ponto.style.setProperty("--w", pct + "%");
+  }
+
+  slider.addEventListener("input", atualizar);
+  document.querySelectorAll('input[name="sonho"]').forEach(function (r) { r.addEventListener("change", atualizar); });
+  atualizar();
+})();
+</script>
+</body>
+</html>
